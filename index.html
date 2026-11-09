@@ -1,0 +1,870 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="被災調査票">
+<meta name="theme-color" content="#23407a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+</head><body>
+<title>文化財被災調査票</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Shippori+Mincho+B1:wght@600;700&display=swap">
+<style>
+/* Layout: sticky app bar; list of survey cards, or an editor with a section index (side rail on iPad landscape, tab strip when narrow). */
+:root{
+  --bg:#eef0f3; --surface:#ffffff; --surface-2:#f6f7f9; --ink:#1a1f2c; --muted:#5b6274; --line:#d3d7df;
+  --accent:#23407a; --accent-soft:#e2e8f4; --on-accent:#ffffff;
+  --ok:#2c7a4b; --unk:#737a8a; --minor:#a37b00; --half:#cf6a12; --large:#c2451b; --total:#ad2420; --lost:#6c1616;
+  --warn-bg:#fff4dc; --warn-ink:#6d4b00;
+  --f-body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  --f-disp:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11141b; --surface:#1a1f2b; --surface-2:#202636; --ink:#e7e9ef; --muted:#9ba2b4; --line:#2f3647;
+  --accent:#93b1ea; --accent-soft:#25314c; --on-accent:#0f1625;
+  --ok:#5cc489; --unk:#9aa1b0; --minor:#e0b53a; --half:#f0923f; --large:#f0714a; --total:#f2615a; --lost:#d38b8b;
+  --warn-bg:#3a2f12; --warn-ink:#f2d58c; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11141b; --surface:#1a1f2b; --surface-2:#202636; --ink:#e7e9ef; --muted:#9ba2b4; --line:#2f3647;
+  --accent:#93b1ea; --accent-soft:#25314c; --on-accent:#0f1625;
+  --ok:#5cc489; --unk:#9aa1b0; --minor:#e0b53a; --half:#f0923f; --large:#f0714a; --total:#f2615a; --lost:#d38b8b;
+  --warn-bg:#3a2f12; --warn-ink:#f2d58c; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1280px;margin:0 auto}
+
+/* App bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;align-items:center;gap:12px;min-height:60px;padding-block:8px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;line-height:1.2;margin-right:auto;min-width:0}
+.brand b{font-family:var(--f-disp);font-size:21px;letter-spacing:.04em}
+.brand small{color:var(--muted);font-size:12px}
+.sync{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);white-space:nowrap}
+.sync i{width:9px;height:9px;border-radius:50%;background:var(--ok)}
+.sync[data-s="pending"] i{background:var(--minor)} .sync[data-s="error"] i{background:var(--total)} .sync[data-s="local"] i{background:var(--unk)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:15px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--total);border-color:currentColor;background:transparent}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+
+.banner{background:var(--warn-bg);color:var(--warn-ink);font-size:14px}
+.banner .wrap{padding-block:8px}
+
+/* List view */
+.list-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding-block:20px 12px}
+.search{flex:1 1 240px;min-width:0;height:46px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:0 14px;font-size:16px}
+.filter{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.filter button{border:0;background:transparent;min-height:44px;padding:0 14px;font-size:14px}
+.filter button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:700}
+.tally{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:14px;font-size:13px;color:var(--muted);align-items:center}
+.tally .pill{font-variant-numeric:tabular-nums}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding-bottom:40px}
+.card{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.card:hover{border-color:var(--accent)}
+.card .top{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.card h3{margin:0;font-size:18px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.card .meta{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.card .foot{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;font-size:12px;color:var(--muted);align-items:center}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;border:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+.pill.lv{color:#fff;border-color:transparent}
+.pill.st-done{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:32px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:18px;margin-bottom:6px}
+
+.bg-ok{background:var(--ok)} .bg-unk{background:var(--unk)} .bg-minor{background:var(--minor)} .bg-half{background:var(--half)}
+.bg-large{background:var(--large)} .bg-total{background:var(--total)} .bg-lost{background:var(--lost)}
+.pill.lv.bg-minor,.pill.lv.bg-ok,.pill.lv.bg-unk{color:#fff}
+
+/* Editor */
+.ed-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-block:14px}
+.ed-top h2{margin:0 auto 0 0;font-family:var(--f-disp);font-size:22px;min-width:0;overflow-wrap:anywhere;text-wrap:balance}
+.ed{display:grid;grid-template-columns:190px minmax(0,1fr);gap:24px;align-items:start;padding-bottom:120px}
+.nav{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px 12px;border-radius:8px;color:var(--ink);text-decoration:none;font-weight:700;font-size:15px}
+.nav a:hover{background:var(--surface)}
+.nav a small{font-weight:400;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.nav a small.full{color:var(--ok)}
+.secs{display:flex;flex-direction:column;gap:18px;min-width:0}
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;scroll-margin-top:calc(env(safe-area-inset-top,0px) + 130px);min-width:0}
+.sec > h3{margin:0 0 14px;font-family:var(--f-disp);font-size:19px;letter-spacing:.03em;display:flex;align-items:baseline;gap:10px}
+.sec > h3 small{font-family:var(--f-body);font-size:12px;color:var(--muted);font-weight:400;letter-spacing:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld.wide{grid-column:1/-1}
+.fld > span,.grp-label{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.fld input,.fld textarea,.other input,.dmg-note,.ph-cap,.ph-cat{width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:10px 12px;font-size:17px;min-height:46px}
+.fld textarea{min-height:120px;resize:vertical}
+.grp{display:flex;flex-direction:column;gap:8px;padding-block:12px;border-top:1px solid var(--line)}
+.grp:first-of-type{border-top:0;padding-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);font-size:15px;display:inline-flex;align-items:center;gap:6px}
+.chip::before{content:"";width:14px;height:14px;border:2px solid var(--muted);border-radius:3px;flex:none}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
+.chip[aria-pressed="true"]::before{border-color:var(--on-accent);background:var(--on-accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.picks{margin-bottom:4px}
+.picks .chip{border-radius:8px}
+.picks .chip::before{border-radius:50%}
+.other{display:flex;gap:8px;align-items:center;margin-top:2px}
+.other span{font-size:14px;color:var(--muted);white-space:nowrap}
+
+.dmg-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px 14px;padding-block:12px;border-top:1px solid var(--line);align-items:start}
+.dmg-row:first-child{border-top:0;padding-top:0}
+.dmg-label{font-weight:700;padding-top:10px}
+.dmg-label.overall{font-family:var(--f-disp);font-size:18px}
+.dmg-body{display:flex;flex-direction:column;gap:8px;min-width:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg-btn{min-height:46px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);font-size:15px;display:inline-flex;align-items:center;gap:6px}
+.seg-btn::before{content:"";width:14px;height:14px;border:2px solid var(--muted);border-radius:50%;flex:none}
+.seg-btn[aria-pressed="true"]{color:#fff;font-weight:700;border-color:transparent}
+.seg-btn[aria-pressed="true"]::before{border-color:#fff;background:#fff;box-shadow:inset 0 0 0 3px currentColor}
+.seg-btn.lv-ok[aria-pressed="true"]{background:var(--ok)} .seg-btn.lv-unk[aria-pressed="true"]{background:var(--unk)}
+.seg-btn.lv-minor[aria-pressed="true"]{background:var(--minor)} .seg-btn.lv-half[aria-pressed="true"]{background:var(--half)}
+.seg-btn.lv-large[aria-pressed="true"]{background:var(--large)} .seg-btn.lv-total[aria-pressed="true"]{background:var(--total)}
+.seg-btn.lv-lost[aria-pressed="true"]{background:var(--lost)}
+.seg .chip{border-radius:8px}
+.seg-sep{width:1px;background:var(--line);margin:4px 4px}
+.dmg-note{font-size:15px;min-height:40px;padding:8px 12px}
+.dmg-row.overall{background:var(--surface-2);margin-inline:-20px;padding-inline:20px;border-radius:0 0 14px 14px;margin-bottom:-18px;padding-bottom:18px}
+
+/* Photos */
+.ph-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.ph-actions label{position:relative;overflow:hidden}
+.ph-actions input[type=file]{position:absolute;inset:0;opacity:0;font-size:0;cursor:pointer}
+.ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.ph{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ph-img{position:relative;aspect-ratio:4/3;max-width:100%;border-radius:8px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line);padding:0}
+.ph-img img{width:100%;height:100%;object-fit:cover;display:block}
+.ph-no{position:absolute;left:6px;top:6px;background:rgba(10,14,24,.75);color:#fff;font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;font-variant-numeric:tabular-nums}
+.ph-up{position:absolute;right:6px;top:6px;background:rgba(10,14,24,.75);color:#ffd36b;font-size:11px;border-radius:6px;padding:2px 8px}
+.ph-row{display:flex;gap:6px}
+.ph-cat{flex:0 0 120px;font-size:14px;min-height:40px;padding:6px 8px}
+.ph-cap{font-size:15px;min-height:40px;padding:6px 10px}
+.ph-del{border:0;background:transparent;color:var(--muted);font-size:13px;align-self:flex-end;min-height:32px;padding:0 4px;text-decoration:underline}
+.hint{color:var(--muted);font-size:13px;margin:0}
+.dict{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:10px}
+.dict .hint{flex:1 1 260px}
+.scan-list{display:flex;flex-direction:column;gap:10px}
+.scan{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface-2);min-width:0}
+.scan .ph-cap,.scan .ph-cat{background:var(--surface)}
+.scan-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.scan-name{font-variant-numeric:tabular-nums;letter-spacing:.02em;overflow-wrap:anywhere}
+.scan-top a.ph-geo{display:inline-flex;align-items:center;text-decoration:none}
+.scan-row{display:flex;flex-wrap:wrap;gap:6px}
+.scan-row .ph-cat{flex:0 0 110px}.scan-row .ph-cap{flex:1 1 180px;width:auto}
+.fld input.linked{color:var(--muted);border-style:dashed}
+.geo{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;gap:8px}
+.geo input{background:var(--surface)}
+.geo-val{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.geo-val b{font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.geo-val small{color:var(--muted);font-size:13px}
+.geo-acts{display:flex;flex-wrap:wrap;gap:8px}
+.geo-acts a.btn{text-decoration:none;color:var(--ink)}
+.ph-foot{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.ph-geo{border:1px solid var(--line);background:var(--accent-soft);color:var(--accent);border-radius:999px;font-size:12px;font-weight:700;min-height:32px;padding:0 10px}
+.geo-help{margin-top:14px;font-size:14px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.geo-help summary{cursor:pointer;color:var(--ink);font-weight:700;min-height:32px;display:flex;align-items:center}
+.geo-help p{margin:6px 0}.geo-help ol{margin:6px 0;padding-left:1.4em}
+
+.ro-note{margin:0 0 14px;background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:10px 14px;font-size:14px;font-weight:700}
+.ed-foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+
+/* dialogs & toast */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:22px;width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 48px)}
+dialog::backdrop{background:rgba(8,10,16,.5)}
+dialog h4{margin:0 0 8px;font-family:var(--f-disp);font-size:20px}
+dialog p{margin:0 0 14px;color:var(--muted);font-size:14px}
+.dlg-acts{display:flex;flex-direction:column;gap:10px}
+.dlg-acts .btn{justify-content:flex-start;text-align:left;min-height:56px;flex-direction:column;align-items:flex-start;gap:0;padding:8px 16px}
+.dlg-acts .btn small{font-weight:400;color:inherit;opacity:.75;font-size:12px}
+.dlg-row{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+#viewer{width:min(1100px,calc(100vw - 24px));padding:12px}
+#viewer img{width:100%;max-height:calc(100vh - 140px);object-fit:contain;display:block;border-radius:8px;background:#000}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;z-index:20;max-width:calc(100vw - 32px)}
+
+@media (max-width: 960px){
+  .ed{grid-template-columns:minmax(0,1fr);gap:12px}
+  .nav{flex-direction:row;overflow-x:auto;top:calc(env(safe-area-inset-top,0px) + 60px);z-index:5;background:var(--bg);padding-block:6px;margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px))}
+  .nav a{flex:none;background:var(--surface);border:1px solid var(--line);padding:8px 12px;font-size:14px}
+}
+@media (max-width: 600px){
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  .dmg-row{grid-template-columns:minmax(0,1fr)}
+  .dmg-label{padding-top:0}
+  .sec{padding:16px}
+  .dmg-row.overall{margin-inline:-16px;padding-inline:16px}
+  .brand small{display:none}
+}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto!important} }
+html{scroll-behavior:smooth}
+</style>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="brand"><b>文化財被災調査票</b><small>熊本地震 一次調査 ／ 指定・登録文化財建造物</small></div>
+    <span class="sync" id="sync" data-s="local"><i></i><span id="syncText">準備中</span></span>
+    <button class="btn ghost" id="btnExport" type="button">書き出し</button>
+    <button class="btn primary" id="btnNew" type="button">＋ 新規調査</button>
+  </div>
+</header>
+<div class="banner" id="banner" hidden><div class="wrap" id="bannerText"></div></div>
+
+<main id="listView" class="wrap">
+  <div class="list-head">
+    <input class="search" id="q" type="search" placeholder="建築名称・所在地・調査員で検索" aria-label="検索">
+    <div class="filter" id="filter" role="group" aria-label="状態で絞り込み">
+      <button type="button" data-v="all" aria-pressed="true">すべて</button>
+      <button type="button" data-v="mine" aria-pressed="false">自分の</button>
+      <button type="button" data-v="draft" aria-pressed="false">入力中</button>
+      <button type="button" data-v="done" aria-pressed="false">完了</button>
+    </div>
+  </div>
+  <div class="tally" id="tally"></div>
+  <div class="cards" id="cards"></div>
+</main>
+
+<main id="editView" class="wrap" hidden></main>
+
+<dialog id="dlgExport">
+  <h4>書き出し</h4>
+  <p id="expNote">全件の調査票をファイルにします。報告書（HTML）はiPadの共有メニューから印刷・PDF保存できます。</p>
+  <div class="dlg-acts">
+    <button class="btn" type="button" data-exp="report-one" id="expOne"><span>この調査票の報告書（HTML）</span><small>調査票の書式＋写真ページ</small></button>
+    <button class="btn" type="button" data-exp="report-all"><span>全件の報告書（HTML）</span><small>1件ずつ改ページ。写真が多いと時間がかかります</small></button>
+    <button class="btn" type="button" data-exp="csv"><span>一覧表（CSV）</span><small>Excelで開ける集計用。写真は枚数のみ</small></button>
+    <button class="btn" type="button" data-exp="json"><span>バックアップ（JSON）</span><small id="expJsonNote">全項目そのまま。写真は保存先IDのみ</small></button>
+    <button class="btn" type="button" data-exp="import" id="expImport" hidden><span>バックアップを読み込む（JSON）</span><small>他のiPadの調査票は閲覧のみで取り込み。自分のバックアップは編集できます</small></button>
+  </div>
+  <input type="file" id="impFile" accept=".json,application/json" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0" tabindex="-1" aria-hidden="true">
+  <div class="dlg-row"><button class="btn ghost" type="button" data-close>閉じる</button></div>
+</dialog>
+
+<dialog id="dlgConfirm">
+  <h4 id="cfTitle">確認</h4>
+  <p id="cfText"></p>
+  <div class="dlg-row"><button class="btn ghost" type="button" data-close>やめる</button><button class="btn danger" type="button" id="cfOk">削除する</button></div>
+</dialog>
+
+<dialog id="viewer">
+  <img id="viewerImg" alt="">
+  <div class="dlg-row"><span class="hint" id="viewerCap" style="margin-right:auto"></span><button class="btn ghost" type="button" data-close>閉じる</button></div>
+</dialog>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ===== 調査票の定義（白紙調査票（一次）に準拠） ===== */
+const DESIGNATION=['国宝','重要文化財','有形民俗文化財','特別史跡','特別名勝','国史跡','国名勝','国登録文化財','都道府県指定文化財','市区町村指定文化財','都道府県史跡','市区町村史跡','都道府県登録文化財','市区町村登録文化財','DOCOMOMO Japan'];
+const USES=['宗教建築','住居建築','学校建築','文化施設','官公庁舎','商業・事務所建築','産業施設','交通・港湾施設','医療施設','軍事施設','水道・電気施設'];
+const STRUCTS=['木造','土蔵造','塗籠造','石造','木骨石造','煉瓦造','木骨煉瓦造','鉄骨煉瓦造','鉄筋コンクリート造','鉄骨鉄筋コンクリート造','コンクリートブロック造','鉄筋コンクリートブロック造','鉄骨造'];
+const ROOF_SHAPES=['切妻','半切妻','寄棟','入母屋','腰折れ','マンサード','方形','片流れ','陸','のこぎり','越し','ドーム','ヴォールト'];
+const ROOF_MATS=['本瓦葺','桟瓦葺','木瓦葺','銅瓦葺','桧皮葺','杉皮葺','杉皮葺石置き','コケラ葺','栩葺','板葺','板葺石置き','草葺（藁・茅など）','厚板葺','銅板葺','鉄板葺','鉄板覆い','S形瓦葺','スペイン瓦葺','セメント瓦葺','天然スレート葺','セメントスレート葺'];
+const SCALE=['被害なし','確認できず','一部損壊','半壊','大規模半壊','全壊'];
+const DAMAGE=[
+  {k:'tilt',l:'傾斜',o:['被害なし','確認できず','傾斜あり']},
+  {k:'flood',l:'浸水',o:['被害なし','確認できず','床下浸水','床上浸水']},
+  {k:'ground',l:'地盤',o:['被害なし','確認できず'],checks:['液状化','流動','陥没・隆起','亀裂','地すべり']},
+  {k:'fire',l:'火災',o:['被害なし','確認できず','半焼','全焼']},
+  {k:'foundation',l:'基礎',o:SCALE},
+  {k:'frame',l:'軸部・架構',o:SCALE},
+  {k:'roof',l:'屋根',o:SCALE},
+  {k:'wall',l:'壁',o:SCALE},
+  {k:'overall',l:'総合判定',o:[...SCALE,'焼失・流失']},
+];
+const LV={'被害なし':'ok','確認できず':'unk','一部損壊':'minor','半壊':'half','大規模半壊':'large','全壊':'total','焼失・流失':'lost','傾斜あり':'half','床下浸水':'minor','床上浸水':'half','半焼':'large','全焼':'total'};
+const PHOTO_CATS=['外観','内部','基礎','軸部・架構','屋根','壁','地盤','その他'];
+const TASKS=['外観写真（四面）','被害箇所写真','3Dスキャン（外部）','3Dスキャン（内部）','所有者・管理者への聞き取り'];
+const BTYPES=['社寺','民家','町家','土蔵','洋館','近代和風','庁舎','学校','教会','橋梁','門・塀','石造構造物'];
+const ERAS=['江戸','明治','大正','昭和戦前','昭和戦後','平成'];
+
+/* ===== helpers ===== */
+const $=(s,el=document)=>el.querySelector(s);
+const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const pad=n=>String(n).padStart(2,'0');
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+const fmtTime=t=>{if(!t)return '';const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
+const LS={get(k,d){try{const v=localStorage.getItem('bks-'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('bks-'+k,JSON.stringify(v))}catch(e){}}};
+const getPath=(o,p)=>p.split('.').reduce((a,k)=>a==null?a:a[k],o);
+const setPath=(o,p,v)=>{const ks=p.split('.');let a=o;ks.slice(0,-1).forEach(k=>{if(a[k]==null||typeof a[k]!=='object')a[k]={};a=a[k]});a[ks[ks.length-1]]=v};
+let toastT;function toast(m,ms){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,ms||2600)}
+
+/* 写真の一時保管（アップロード前・オフライン時） */
+const idb=(()=>{let p;function open(){if(!p)p=new Promise((res,rej)=>{try{const r=indexedDB.open('bunkazai-survey',1);r.onupgradeneeded=()=>r.result.createObjectStore('photos');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});return p}
+  function tx(mode,fn){return open().then(db=>new Promise((res,rej)=>{const t=db.transaction('photos',mode);const r=fn(t.objectStore('photos'));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)}))}
+  return{put:(k,v)=>tx('readwrite',s=>s.put(v,k)),get:k=>tx('readonly',s=>s.get(k)),del:k=>tx('readwrite',s=>s.delete(k)),keys:()=>tx('readonly',s=>s.getAllKeys())}})();
+
+/* ===== data ===== */
+const S={db:null,assets:null,downloads:null,records:new Map(),pending:LS.get('pending',{}),local:LS.get('local',{}),loaded:false,cur:null,filter:'all',q:'',readOnly:false,objUrls:{},online:navigator.onLine};
+function newRecord(){const d=LS.get('defaults',{});return{id:uid(),no:'',status:'draft',date:today(),surveyor:d.surveyor||'',name:'',address:'',btype:'',era:'',
+  designation:[],designationOther:'',use:[],useOther:'',structure:[],structureOther:'',roofShape:[],roofShapeOther:'',roofMat:[],roofMatOther:'',
+  owner:{name:'',address:'',tel:'',email:''},damage:{},damageNote:{},groundItems:[],notes:'',photos:[],tasks:[],scanId:'',scans:[],geo:null,createdAt:Date.now(),updatedAt:Date.now()}}
+function normalize(r){const b=newRecord();const o=Object.assign(b,JSON.parse(JSON.stringify(r)));o.owner=Object.assign({name:'',address:'',tel:'',email:''},o.owner||{});o.damage=o.damage||{};o.damageNote=o.damageNote||{};['designation','use','structure','roofShape','roofMat','groundItems','photos','tasks','scans'].forEach(k=>{if(!Array.isArray(o[k]))o[k]=[]});return o}
+function allRecords(){const m=new Map(S.records);Object.values(S.local).forEach(r=>{const x=m.get(r.id);if(!x||(r.updatedAt||0)>=(x.updatedAt||0))m.set(r.id,r)});Object.values(S.pending).forEach(r=>{const x=m.get(r.id);if(!x||(r.updatedAt||0)>=(x.updatedAt||0))m.set(r.id,r)});return [...m.values()]}
+function persistPending(){LS.set('pending',S.pending)}
+/* Claudeの外（GitHub Pagesなど）で開いた単独Web版かどうか */
+const STANDALONE=!(window.claude&&window.claude.use);
+/* 調査票は作成者ごとに surveyors/<作成者ID>/recs/<調査票ID> に保存。作成者本人だけが書き込める（公開時のdbルール） */
+const mine=r=>!r.by||r.by===S.uid;
+const recPath=r=>`surveyors/${r.by}/recs/${r.id}`;
+
+const timers={},saving={};
+function touch(rec){rec.updatedAt=Date.now();S.pending[rec.id]=rec;persistPending();clearTimeout(timers[rec.id]);timers[rec.id]=setTimeout(()=>flush(rec.id),700);updateSync()}
+async function flush(id){
+  if(saving[id]){saving[id]='again';return}
+  const rec=S.pending[id];if(!rec)return;
+  if(!mine(rec)){delete S.pending[id];persistPending();updateSync();return}
+  if(!S.db||!S.uid){S.local[id]=rec;LS.set('local',S.local);S.records.set(id,rec);delete S.pending[id];persistPending();updateSync();return}
+  if(!rec.by)rec.by=S.uid;
+  saving[id]=true;const stamp=rec.updatedAt;
+  try{await S.db.doc(recPath(rec)).set(JSON.parse(JSON.stringify(rec)));
+    S.records.set(id,rec);
+    if(S.pending[id]&&S.pending[id].updatedAt===stamp){delete S.pending[id];persistPending()}
+    S.lastErr=null;
+  }catch(e){S.lastErr=e&&e.code;const c=e&&e.code;
+    if((c==='invalid_argument'&&S.canWrite!==true)||['not_granted','revoked','capability_disabled','capability_removed'].includes(c)){S.lastErr=null;setLocalOnly('クラウドに保存する権限がないため、この端末に保存しています。共有するには、claude.ai にサインインし「編集者」として招待を受けてください。');saving[id]=false;flush(id);return}}
+  finally{const again=saving[id]==='again';saving[id]=false;if(again)flush(id);updateSync()}
+}
+function flushAll(){Object.keys(S.pending).forEach(flush)}
+
+function updateSync(){
+  const el=$('#sync'),tx=$('#syncText');const n=Object.keys(S.pending).length;
+  if(!S.db){el.dataset.s='local';tx.textContent=n?'保存中…':'この端末に保存';return}
+  if(S.lastErr){el.dataset.s='error';tx.textContent=`未送信 ${n}件（電波回復後に自動送信）`;return}
+  if(n){el.dataset.s='pending';tx.textContent=S.online?`送信中 ${n}件`:`オフライン：未送信 ${n}件`;return}
+  el.dataset.s='ok';tx.textContent='クラウド保存済み';
+}
+// 書き込み権限がない・サインインしていない場合も入力は止めず、この端末に保存する
+function setLocalOnly(msg){S.db=null;S.localOnly=true;S.loaded=true;showBanner(msg);flushAll();updateSync();if(!$('#listView').hidden)renderList()}
+function showBanner(t){$('#bannerText').textContent=t;$('#banner').hidden=!t}
+
+/* ===== クラウドの読み込み（全員の調査票を購読） ===== */
+const parts={},subs={};let legacy=new Map();
+function rebuild(){
+  const m=new Map(legacy);Object.values(parts).forEach(p=>p.forEach((v,k)=>m.set(k,v)));
+  S.records=m;S.loaded=true;
+  // 他の端末からの更新を表示中の画面へ反映（入力中でなければ）
+  if(S.cur&&!S.pending[S.cur.id]){const r=m.get(S.cur.id);
+    if(r&&(r.updatedAt||0)>(S.cur.updatedAt||0)&&!document.activeElement?.closest('#editView')){S.cur=normalize(r);renderEditor(true)}}
+  if(!$('#listView').hidden)renderList();
+}
+function subscribeAll(db){
+  let slow=setTimeout(()=>showBanner('サーバーに接続できません。入力はこの端末に保存し、電波が戻ったら自動で送信します。'),10000);
+  const fail=err=>{clearTimeout(slow);showBanner('データの読み込みが止まりました。ページを開き直してください。（'+(err&&err.code)+'）')};
+  const watch=u=>{if(subs[u])return;subs[u]=db.collection(`surveyors/${u}/recs`).onSnapshot(snap=>{
+      const m=new Map();snap.docs.forEach(d=>{const x=d.data();if(x&&x.id)m.set(x.id,Object.assign(x,{by:x.by||u}))});parts[u]=m;rebuild()},fail)};
+  if(S.uid)watch(S.uid);
+  db.collection('surveyors').onSnapshot(snap=>{
+    if(!snap.metadata.fromCache){clearTimeout(slow);if(!S.localOnly)showBanner('')}
+    snap.docs.forEach(d=>watch(d.id));if(!snap.docs.length)rebuild();
+  },fail);
+  // 旧形式（surveys/<id>）の調査票：表示は閲覧のみ。所有者が開いたときに所有者の調査票として移し替える
+  db.collection('surveys').onSnapshot(snap=>{
+    const m=new Map();snap.docs.forEach(d=>{const x=d.data();if(x&&x.id)m.set(x.id,Object.assign(x,{by:x.by||'legacy'}))});legacy=m;rebuild();
+    if(S.isOwner&&S.uid&&m.size)migrateLegacy(db,m);
+  },()=>{});
+}
+let migrating=false;
+async function migrateLegacy(db,m){
+  if(migrating)return;migrating=true;
+  try{for(const [id,x] of m){const r=Object.assign({},x,{by:S.uid});
+      await db.doc(recPath(r)).set(JSON.parse(JSON.stringify(r)));await db.doc('surveys/'+id).delete()}}
+  catch(e){}finally{migrating=false}
+}
+
+/* ===== boot ===== */
+async function boot(){
+  renderList();updateSync();
+  window.addEventListener('online',()=>{S.online=true;flushAll();uploadPending();updateSync()});
+  window.addEventListener('offline',()=>{S.online=false;updateSync()});
+  const c=window.claude;
+  if(STANDALONE){S.uid=LS.get('device',null);if(!S.uid){S.uid='dev-'+uid();LS.set('device',S.uid)}
+    try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+    S.loaded=true;S.local=LS.get('local',{});Object.values(S.local).forEach(r=>S.records.set(r.id,r));renderList();flushAll();
+    showBanner('データはこのiPadの中に保存されます（ネット不要）。調査の終わりに「書き出し」→「バックアップ（JSON）」で保管・提出してください。');return}
+  const [db,assets,downloads,user]=await Promise.all(['db','assets','downloads','user'].map(n=>c.use(n).catch(()=>null)));
+  S.db=db;S.assets=assets;S.downloads=downloads;
+  if(user){try{S.canWrite=await user.can('data.write')}catch(e){}
+    try{S.uid=await user.id()}catch(e){}
+    try{S.isOwner=await user.isOwner()}catch(e){}}
+  if(!db){S.loaded=true;renderList();showBanner('サインインしていないため、この端末だけに保存します。共有するには Safari で claude.ai にサインインしてから開いてください。');updateSync();return}
+  subscribeAll(db);
+  if(S.canWrite===false||!S.uid){setLocalOnly('閲覧のみの権限のため、入力はこの端末だけに保存します。共有するには共有設定で「編集者」にしてもらってください。');return}
+  // 以前この端末だけに保存した調査票をクラウドへ送る
+  Object.values(S.local).forEach(r=>{if(!r.by&&!S.pending[r.id])S.pending[r.id]=r});
+  if(Object.keys(S.local).length){S.local={};LS.set('local',S.local);persistPending()}
+  // 調査員の一覧（他の人が自分の調査票を見つけるための目印）
+  try{await db.doc('surveyors/'+S.uid).set({kind:'surveyor',uid:S.uid,surveyor:LS.get('defaults',{}).surveyor||'',at:Date.now()})}catch(e){}
+  flushAll();uploadPending();updateSync();
+  if(!assets)S.noAssets=true;
+}
+
+/* ===== list ===== */
+function overallOf(r){return r.damage&&r.damage.overall||''}
+function answered(r){return DAMAGE.filter(d=>d.k==='ground'?(r.damage.ground||(r.groundItems||[]).length):r.damage[d.k]).length}
+function renderList(){
+  const q=S.q.trim().toLowerCase();
+  let rs=allRecords().map(normalize).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  const all=rs;
+  if(S.filter==='mine')rs=rs.filter(mine);else if(S.filter!=='all')rs=rs.filter(r=>r.status===S.filter);
+  if(q)rs=rs.filter(r=>[r.name,r.address,r.surveyor,r.no,r.owner.name].join(' ').toLowerCase().includes(q));
+  // tally
+  const counts={};all.forEach(r=>{const o=overallOf(r)||'未判定';counts[o]=(counts[o]||0)+1});
+  const done=all.filter(r=>r.status==='done').length;
+  const order=['焼失・流失','全壊','大規模半壊','半壊','一部損壊','被害なし','確認できず','未判定'];
+  $('#tally').innerHTML=all.length?`<span>全 <b class="pill">${all.length}件</b>（完了 ${done}）</span><span>総合判定：</span>`+order.filter(k=>counts[k]).map(k=>`<span class="pill ${LV[k]?'lv bg-'+LV[k]:''}">${k} ${counts[k]}</span>`).join(''):'';
+  const cards=$('#cards');
+  if(!all.length){cards.innerHTML=S.loaded||!S.db?`<div class="empty"><b>まだ調査票がありません</b>右上の「＋ 新規調査」から1件目を作成してください。入力は自動で保存されます。</div>`:`<div class="empty"><b>読み込み中…</b>保存済みの調査票を取得しています。</div>`;return}
+  if(!rs.length){cards.innerHTML=`<div class="empty"><b>該当する調査票はありません</b>検索語や絞り込みを変えてください。</div>`;return}
+  cards.innerHTML=rs.map(r=>{const o=overallOf(r);const un=(S.pending[r.id]?'<span class="pill">未送信</span>':'')+(mine(r)?'':'<span class="pill">閲覧のみ</span>');
+    return `<button class="card" type="button" data-open="${esc(r.id)}">
+      <div class="top"><h3>${esc(r.name)||'（名称未入力）'}</h3>${o?`<span class="pill lv bg-${LV[o]}">${esc(o)}</span>`:'<span class="pill">総合 未判定</span>'}</div>
+      <div class="meta">${esc(r.address)||'所在地 未入力'}</div>
+      <div class="foot">${r.no?`<span>No.${esc(r.no)}</span>·`:''}<span>${esc(r.date)}</span>·<span>${esc(r.surveyor)||'調査員未入力'}</span>
+        <span style="margin-left:auto"></span><span>被害 ${answered(r)}/${DAMAGE.length}</span>·<span>写真 ${r.photos.length}</span>
+        ${r.status==='done'?'<span class="pill st-done">完了</span>':'<span class="pill">入力中</span>'}${un}</div>
+    </button>`}).join('');
+}
+$('#cards').addEventListener('click',e=>{const b=e.target.closest('[data-open]');if(b)openRecord(b.dataset.open)});
+$('#q').addEventListener('input',e=>{S.q=e.target.value;renderList()});
+$('#filter').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.filter=b.dataset.v;$$('#filter button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderList()});
+$('#btnNew').addEventListener('click',()=>{S.readOnly=false;const r=newRecord();if(S.uid)r.by=S.uid;S.cur=r;touch(r);showEditor();renderEditor()});
+
+function openRecord(id){const r=allRecords().find(x=>x.id===id);if(!r)return;S.readOnly=!mine(r);S.cur=normalize(r);showEditor();renderEditor()}
+let wake=null;
+function showEditor(){$('#listView').hidden=true;$('#editView').hidden=false;window.scrollTo(0,0);try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(w=>wake=w).catch(()=>{})}catch(e){}}
+function showList(){if(S.cur&&S.pending[S.cur.id])flush(S.cur.id);S.cur=null;S.readOnly=false;$('#editView').hidden=true;$('#listView').hidden=false;try{wake&&wake.release()}catch(e){}wake=null;renderList();window.scrollTo(0,0)}
+
+/* ===== editor ===== */
+const SECS=[['sec-basic','基本情報'],['sec-class','分類'],['sec-owner','所有者'],['sec-damage','被害の状況'],['sec-photo','写真'],['sec-other','その他・記録']];
+function fld(label,path,opts={}){const v=getPath(S.cur,path)??'';const id='f-'+path.replace(/\./g,'-');
+  const inp=opts.area?`<textarea id="${id}" data-f="${path}" placeholder="${esc(opts.ph||'')}">${esc(v)}</textarea>`:`<input id="${id}" data-f="${path}" type="${opts.type||'text'}" value="${esc(v)}" placeholder="${esc(opts.ph||'')}"${opts.list?` list="${opts.list}"`:''}${opts.im?` inputmode="${opts.im}"`:''} autocomplete="off">`;
+  return `<label class="fld${opts.wide?' wide':''}"><span>${label}</span>${inp}</label>`}
+/* 選択肢ボタン＋自由入力（iPadのSafariは候補リスト datalist を表示しないため） */
+function pickFld(label,key,opts,ph){const v=S.cur[key]||'';
+  return `<div class="fld wide"><span>${label}</span><div class="chips picks">${opts.map(o=>`<button type="button" class="chip" data-pick="${key}" data-v="${esc(o)}" aria-pressed="${v===o}">${esc(o)}</button>`).join('')}</div>
+  <input id="f-${key}" data-f="${key}" value="${esc(v)}" placeholder="${esc(ph)}" autocomplete="off" aria-label="${label}"></div>`}
+function syncPicks(key){const v=S.cur[key]||'';$$(`[data-pick="${key}"]`).forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===v))}
+function chipGroup(label,key,opts,otherKey){const sel=new Set(S.cur[key]);
+  return `<div class="grp"><div class="grp-label">${label}</div><div class="chips">${opts.map(o=>`<button type="button" class="chip" data-multi="${key}" data-v="${esc(o)}" aria-pressed="${sel.has(o)}">${esc(o)}</button>`).join('')}</div>
+  ${otherKey?`<label class="other"><span>その他：</span><input id="f-${otherKey}" data-f="${otherKey}" value="${esc(S.cur[otherKey])}" placeholder="該当があれば記入" autocomplete="off"></label>`:''}</div>`}
+function damageRow(d){const v=S.cur.damage[d.k]||'';const ov=d.k==='overall';
+  let seg=d.o.map(o=>`<button type="button" class="seg-btn lv-${LV[o]}" data-radio="${d.k}" data-v="${esc(o)}" aria-pressed="${v===o}">${esc(o)}</button>`).join('');
+  if(d.checks){const sel=new Set(S.cur.groundItems);seg+='<span class="seg-sep"></span>'+d.checks.map(o=>`<button type="button" class="chip" data-multi="groundItems" data-v="${esc(o)}" aria-pressed="${sel.has(o)}">${esc(o)}</button>`).join('')}
+  return `<div class="dmg-row${ov?' overall':''}" id="d-${d.k}"><div class="dmg-label${ov?' overall':''}">${d.l}</div><div class="dmg-body"><div class="seg">${seg}</div>
+  <input class="dmg-note" id="f-note-${d.k}" data-f="damageNote.${d.k}" value="${esc(S.cur.damageNote[d.k]||'')}" placeholder="所見メモ（任意）${ov?'：判定の根拠など':''}" autocomplete="off"></div></div>`}
+
+function renderEditor(keepScroll){
+  const r=S.cur,y=window.scrollY,ed=$('#editView');
+  ed.innerHTML=`
+  <div class="ed-top">
+    <button class="btn ghost" type="button" data-act="back">← 一覧</button>
+    <h2 id="edTitle">${esc(r.name)||'新しい調査票'}</h2>
+    <div class="filter" role="group" aria-label="状態"><button type="button" data-act="status" data-v="draft" aria-pressed="${r.status!=='done'}">入力中</button><button type="button" data-act="status" data-v="done" aria-pressed="${r.status==='done'}">完了</button></div>
+    <button class="btn" type="button" data-act="export">書き出し</button>
+  </div>
+  ${S.readOnly?`<p class="ro-note">他の調査員（${esc(r.surveyor)||'調査員未入力'}）が入力した調査票です。閲覧のみで、編集・削除はできません。</p>`:''}
+  <div class="ed">
+    <nav class="nav" id="nav">${SECS.map(([id,l])=>`<a href="#${id}" data-nav="${id}"><span>${l}</span><small id="p-${id}"></small></a>`).join('')}</nav>
+    <div class="secs">
+      <section class="sec" id="sec-basic"><h3>基本情報</h3><div class="grid2">
+        ${fld('調査日','date',{type:'date'})}${fld('調査員','surveyor',{ph:'例：山田・佐藤'})}
+        ${fld('建築名称','name',{wide:true,ph:'例：旧〇〇家住宅 主屋'})}
+        ${fld('現所在地','address',{wide:true,ph:'例：熊本市中央区〇〇町1-2'})}
+        <div class="fld wide geo" id="geoBox"></div>
+        ${pickFld('建物種別','btype',BTYPES,'一覧から選ぶか入力')}${pickFld('時代区分','era',ERAS,'一覧から選ぶか入力')}
+        ${fld('整理番号（任意）','no',{ph:'例：K-012',im:'text'})}
+      </div></section>
+
+      <section class="sec" id="sec-class"><h3>分類<small>該当をすべてタップ</small></h3>
+        ${chipGroup('指定の有無','designation',DESIGNATION,'designationOther')}
+        ${chipGroup('現在用途','use',USES,'useOther')}
+        ${chipGroup('構造','structure',STRUCTS,'structureOther')}
+        ${chipGroup('屋根形状','roofShape',ROOF_SHAPES,'roofShapeOther')}
+        ${chipGroup('屋根葺材','roofMat',ROOF_MATS,'roofMatOther')}
+      </section>
+
+      <section class="sec" id="sec-owner"><h3>所有者</h3>
+        <div class="chips" style="margin-bottom:12px"><button type="button" class="chip" data-act="owner-same" aria-pressed="${!!r.ownerSame}">住所は現所在地と同じ</button></div>
+        <div class="grid2">
+        ${fld('氏名','owner.name')}${fld('住所','owner.address')}
+        ${fld('TEL','owner.tel',{type:'tel',im:'tel'})}${fld('Email／FAX','owner.email',{im:'email'})}
+      </div></section>
+
+      <section class="sec" id="sec-damage"><h3>被害の状況<small>もう一度タップで選択解除</small></h3>
+        ${DAMAGE.map(damageRow).join('')}
+      </section>
+
+      <section class="sec" id="sec-photo"><h3>写真<small id="phCount"></small></h3>
+        <div class="ph-actions">
+          <label class="btn primary">カメラで撮影<input id="phCam" type="file" accept="image/*" capture="environment" multiple></label>
+          <label class="btn">写真ライブラリから追加<input id="phLib" type="file" accept="image/*" multiple></label>
+        </div>
+        <div class="ph-grid" id="phGrid"></div>
+        <p class="hint" id="phHint"></p>
+        <details class="geo-help"><summary>位置の取得について</summary>
+          <p>位置は写真に記録された撮影位置（GPS）から読み取ります。確実に位置を残すには次の手順がおすすめです。</p>
+          <ol><li>iPadの「設定」→「プライバシーとセキュリティ」→「位置情報サービス」→「カメラ」を「このAppの使用中」にする。</li>
+          <li>標準の「カメラ」アプリで撮影する（このアプリの「カメラで撮影」は位置が記録されないことがあります）。</li>
+          <li>「写真ライブラリから追加」で写真を選ぶ際、画面上部の「オプション」で「位置情報」をオンにする。</li></ol>
+          <p>位置付きの写真には「位置あり」と表示され、「この位置を使う」で所在地の位置に設定できます。</p></details>
+      </section>
+
+      <section class="sec" id="sec-other"><h3>その他・記録</h3>
+        <div class="grid2">${fld('その他（特記事項）','notes',{area:true,wide:true,ph:'応急措置の必要性、立入りの可否、所有者からの聞き取り内容など'})}</div>
+        <div class="dict">
+          <button class="btn primary" type="button" data-act="dictate"${S.readOnly?' disabled':''}>音声で入力する</button>
+          <p class="hint" id="dictHint">ボタンを押すと特記事項の末尾に改行してキーボードが開きます。キーボードの<b>マイクボタン</b>をタップして話してください。終わったらもう一度マイクをタップ。</p>
+        </div>
+        <div class="grp" style="margin-top:12px"><div class="grp-label">記録作業チェック<span style="font-weight:400">（調査票外の作業記録）</span></div>
+          <div class="chips">${TASKS.map(o=>`<button type="button" class="chip" data-multi="tasks" data-v="${esc(o)}" aria-pressed="${r.tasks.includes(o)}">${esc(o)}</button>`).join('')}</div></div>
+        <div class="grp" style="margin-top:12px"><div class="grp-label">3Dスキャン（Polycam）</div>
+          <div id="scanList" class="scan-list"></div>
+          <div><button class="btn" type="button" data-act="scan-add">＋ スキャンを追加</button></div>
+          <p class="hint">Polycamで撮影する前にここで追加し、表示された名前をコピーしてPolycamのキャプチャ名にすると後で照合しやすくなります。共有リンク（poly.cam）は後から貼り付けできます。</p>
+          ${r.scanId?`<p class="hint">以前のメモ：${esc(r.scanId)}</p>`:''}
+        </div>
+      </section>
+
+      <div class="ed-foot">
+        <span class="hint">最終更新 <span id="edUpd">${fmtTime(r.updatedAt)}</span>・入力は自動保存</span>
+        ${S.readOnly?'':'<button class="btn danger" type="button" data-act="delete">この調査票を削除</button>'}
+      </div>
+    </div>
+  </div>
+`;
+  renderPhotos();renderGeo();renderScans();syncOwnerAddr();updateProgress();
+  if(S.readOnly)$$('#editView input,#editView textarea,#editView select,#editView .chip,#editView .seg-btn,#editView [data-act="status"],#editView [data-act="scan-add"],#editView .ph-del,#editView .ph-actions label').forEach(x=>{x.disabled=true;if(x.tagName==='LABEL')x.hidden=true});
+  if(keepScroll)window.scrollTo(0,y);
+}
+
+function updateProgress(){const r=S.cur;if(!r)return;
+  const set=(id,t,full)=>{const el=$('#p-'+id);if(el){el.textContent=t;el.classList.toggle('full',!!full)}};
+  const b=['date','surveyor','name','address','btype','era'].filter(k=>r[k]).length;set('sec-basic',b+'/6',b===6);
+  const c=['designation','use','structure','roofShape','roofMat'].filter(k=>r[k].length||r[k+'Other']).length;set('sec-class',c+'/5',c===5);
+  const o=Object.values(r.owner).filter(Boolean).length;set('sec-owner',o+'/4',o===4);
+  const d=answered(r);set('sec-damage',d+'/'+DAMAGE.length,d===DAMAGE.length);
+  set('sec-photo',r.photos.length+'枚',r.photos.length>0);
+  set('sec-other',r.scans.length?`スキャン${r.scans.length}`:(r.tasks.length?r.tasks.length+'項目':''),r.scans.length>0);
+  const u=$('#edUpd');if(u)u.textContent=fmtTime(r.updatedAt);
+}
+const SCAN_AREAS=['外部','内部','被害部位','その他'];
+const SCAN_MODES=['LiDAR','Photo','Room','360°'];
+function renderScans(){
+  const box=$('#scanList');if(!box)return;const r=S.cur;
+  box.innerHTML=r.scans.length?r.scans.map((s,i)=>`<div class="scan">
+    <div class="scan-top"><b class="scan-name">${esc(s.name)}</b>
+      <button type="button" class="ph-geo" data-act="scan-copy" data-sid="${s.sid}">名前をコピー</button>
+      ${s.link&&/^https:\/\//.test(s.link)?`<a class="ph-geo" href="${esc(s.link)}" target="_blank" rel="noopener">Polycamで開く</a>`:''}
+      <button type="button" class="ph-del" data-act="scan-del" data-sid="${s.sid}" style="margin-left:auto">削除</button></div>
+    <div class="scan-row">
+      <select class="ph-cat" data-sid="${s.sid}" data-sf="area" aria-label="範囲">${SCAN_AREAS.map(o=>`<option${o===s.area?' selected':''}>${o}</option>`).join('')}</select>
+      <select class="ph-cat" data-sid="${s.sid}" data-sf="mode" aria-label="モード">${SCAN_MODES.map(o=>`<option${o===s.mode?' selected':''}>${o}</option>`).join('')}</select>
+      <input class="ph-cap" data-sid="${s.sid}" data-sf="memo" value="${esc(s.memo||'')}" placeholder="範囲メモ（例：北面〜東面）" autocomplete="off">
+    </div>
+    <input class="ph-cap" data-sid="${s.sid}" data-sf="link" value="${esc(s.link||'')}" placeholder="Polycam共有リンク（https://poly.cam/…）" inputmode="url" autocomplete="off">
+  </div>`).join(''):'<p class="hint">まだスキャンの記録はありません。</p>';
+  if(S.readOnly)$$('#scanList input,#scanList select,#scanList [data-act="scan-del"]').forEach(x=>x.disabled=true);
+}
+function syncOwnerAddr(){const el=$('#f-owner-address');if(!el)return;el.value=S.cur.owner.address||'';el.readOnly=!!S.cur.ownerSame;el.classList.toggle('linked',!!S.cur.ownerSame)}
+function change(){if(S.readOnly)return;touch(S.cur);updateProgress()}
+
+const ED=$('#editView');
+ED.addEventListener('input',e=>{const t=e.target;if(S.readOnly)return;
+  if(t.dataset.f){setPath(S.cur,t.dataset.f,t.value);if(t.dataset.f==='address'&&S.cur.ownerSame){S.cur.owner.address=t.value;syncOwnerAddr()}if(t.dataset.f==='name')$('#edTitle').textContent=t.value||'新しい調査票';if(t.dataset.f==='surveyor')LS.set('defaults',{surveyor:t.value});if(t.dataset.f==='btype'||t.dataset.f==='era')syncPicks(t.dataset.f);change()}
+  else if(t.dataset.pf){const p=S.cur.photos.find(x=>x.pid===t.dataset.pid);if(p){p[t.dataset.pf]=t.value;change()}}
+  else if(t.dataset.sf){const s=S.cur.scans.find(x=>x.sid===t.dataset.sid);if(s){s[t.dataset.sf]=t.value.trim?t.value:t.value;change()}}
+});
+ED.addEventListener('focusout',e=>{if(e.target.dataset&&e.target.dataset.sf==='link')renderScans()});
+function copyText(s){try{navigator.clipboard.writeText(s).then(()=>toast(`「${s}」をコピーしました。Polycamのキャプチャ名に貼り付けてください`,4000),()=>toast(`キャプチャ名：${s}`,6000))}catch(e){toast(`キャプチャ名：${s}`,6000)}}
+ED.addEventListener('change',e=>{const t=e.target;if(t.id==='phCam'||t.id==='phLib'){addPhotos([...t.files]);t.value=''}
+  else if(t.dataset.geoManual!==undefined&&!S.readOnly){const m=t.value.match(/(-?\d{1,3}(?:\.\d+)?)\s*[,，、\s]\s*(-?\d{1,3}(?:\.\d+)?)/);
+    if(m&&Math.abs(+m[1])<=90&&Math.abs(+m[2])<=180){setGeo(+(+m[1]).toFixed(6),+(+m[2]).toFixed(6),'手入力');change()}else toast('「32.806120, 130.703210」の形で入力してください',4000)}});
+ED.addEventListener('click',e=>{
+  const b=e.target.closest('button,a[data-nav]');if(!b)return;
+  if(b.dataset.nav){e.preventDefault();const el=document.getElementById(b.dataset.nav);el&&el.scrollIntoView({block:'start'});return}
+  const r=S.cur;
+  if(b.dataset.multi){if(S.readOnly)return;const k=b.dataset.multi,v=b.dataset.v,arr=r[k];const i=arr.indexOf(v);if(i>=0)arr.splice(i,1);else arr.push(v);b.setAttribute('aria-pressed',i<0);
+    if(k==='groundItems'&&arr.length&&r.damage.ground){r.damage.ground='';$$('[data-radio="ground"]').forEach(x=>x.setAttribute('aria-pressed','false'))}
+    change();return}
+  if(b.dataset.pick){if(S.readOnly)return;const k=b.dataset.pick;const nv=r[k]===b.dataset.v?'':b.dataset.v;r[k]=nv;const inp=$('#f-'+k);if(inp)inp.value=nv;syncPicks(k);change();return}
+  if(b.dataset.radio){if(S.readOnly)return;const k=b.dataset.radio,v=b.dataset.v;const nv=r.damage[k]===v?'':v;r.damage[k]=nv;
+    $$(`[data-radio="${k}"]`).forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===nv));
+    if(k==='ground'&&nv){r.groundItems=[];$$('[data-multi="groundItems"]').forEach(x=>x.setAttribute('aria-pressed','false'))}
+    change();return}
+  const a=b.dataset.act;
+  if(a==='back')showList();
+  else if(a==='status'){if(S.readOnly)return;r.status=b.dataset.v;$$('[data-act="status"]').forEach(x=>x.setAttribute('aria-pressed',x===b));change();if(r.status==='done'){const miss=DAMAGE.length-answered(r);toast(miss?`完了にしました（被害の状況 未入力 ${miss}項目）`:'完了にしました')}}
+  else if(a==='export')openExport(true);
+  else if(a==='delete')confirmDelete(r);
+  else if(a==='ph-view')viewPhoto(b.dataset.pid);
+  else if(a==='ph-del')confirmPhotoDelete(b.dataset.pid);
+  else if(a==='ph-geo'){if(S.readOnly)return;const i=r.photos.findIndex(p=>p.pid===b.dataset.pid);const p=r.photos[i];if(p&&p.lat!=null){setGeo(p.lat,p.lon,`写真 P-${pad(i+1)} の撮影位置`);change();toast('所在地の位置に設定しました')}}
+  else if(a==='dictate'){if(S.readOnly)return;const ta=$('#f-notes');if(!ta)return;
+    if(ta.value&&!ta.value.endsWith('\n')){ta.value+='\n';S.cur.notes=ta.value;change()}
+    ta.focus();const n=ta.value.length;try{ta.setSelectionRange(n,n)}catch(e){}ta.scrollIntoView({block:'center'});
+    toast('キーボードのマイクボタンをタップして話してください',4000)}
+  else if(a==='scan-add'){if(S.readOnly)return;const d=(r.date||today()).replace(/-/g,'');const base=(r.no||r.name||'SCAN').replace(/[\\/:*?"<>|\s]/g,'').slice(0,20)||'SCAN';
+    const name=`${base}_${d}_${pad(r.scans.length+1)}`;const last=r.scans[r.scans.length-1];
+    r.scans.push({sid:uid(),name,area:last?last.area:'外部',mode:last?last.mode:'LiDAR',memo:'',link:''});renderScans();change();copyText(name)}
+  else if(a==='scan-copy'){const s=r.scans.find(x=>x.sid===b.dataset.sid);if(s)copyText(s.name)}
+  else if(a==='scan-del'){if(S.readOnly)return;const i=r.scans.findIndex(x=>x.sid===b.dataset.sid);if(i>=0){const s=r.scans[i];ask('スキャン記録を削除',`「${s.name}」の記録を削除します（Polycam側のデータは消えません）。`,'削除する',async()=>{r.scans.splice(i,1);renderScans();change()})}}
+  else if(a==='owner-same'){if(S.readOnly)return;r.ownerSame=!r.ownerSame;b.setAttribute('aria-pressed',r.ownerSame);
+    if(r.ownerSame)r.owner.address=r.address;syncOwnerAddr();change()}
+  else if(a==='geo-clear'){if(S.readOnly)return;r.geo=null;renderGeo();change()}
+});
+
+/* ===== photos ===== */
+function photoSrc(p){if(p.asset)return '/_blob/'+p.asset;return S.objUrls[p.pid]||''}
+async function ensureLocalUrls(){for(const p of S.cur.photos){if(!p.asset&&!S.objUrls[p.pid]){try{const it=await idb.get(p.pid);if(it){S.objUrls[p.pid]=URL.createObjectURL(new Blob([it.buf],{type:it.type||'image/jpeg'}))}}catch(e){}}}}
+async function renderPhotos(){
+  const r=S.cur;if(!r)return;const g=$('#phGrid');if(!g)return;
+  await ensureLocalUrls();if(S.cur!==r)return;
+  $('#phCount').textContent=r.photos.length?`${r.photos.length}枚`:'';
+  g.innerHTML=r.photos.map((p,i)=>{const src=photoSrc(p);return `<div class="ph">
+    <button type="button" class="ph-img" data-act="ph-view" data-pid="${p.pid}" aria-label="写真${i+1}を拡大">${src?`<img src="${src}" alt="" loading="lazy">`:''}<span class="ph-no">P-${pad(i+1)}</span>${p.asset||STANDALONE?'':'<span class="ph-up">未送信</span>'}</button>
+    <div class="ph-row"><select class="ph-cat" data-pid="${p.pid}" data-pf="cat" aria-label="部位">${PHOTO_CATS.map(c=>`<option${c===p.cat?' selected':''}>${c}</option>`).join('')}</select>
+    <input class="ph-cap" data-pid="${p.pid}" data-pf="cap" value="${esc(p.cap)}" placeholder="説明（例：北面外観）" autocomplete="off"></div>
+    <div class="ph-foot">${p.lat!=null?`<button type="button" class="ph-geo" data-act="ph-geo" data-pid="${p.pid}">位置あり・この位置を使う</button>`:'<span class="hint">位置なし</span>'}
+    <button type="button" class="ph-del" data-act="ph-del" data-pid="${p.pid}">削除</button></div></div>`}).join('');
+  const hint=$('#phHint');
+  hint.textContent=r.photos.length?'写真は長辺2400pxに縮小して保存します。':'撮影した写真は自動で縮小・保存されます。部位と説明は後から入力できます。';
+  if(S.db&&!S.assets)hint.textContent='この共有権限では写真をクラウドへ送れません（端末内にのみ保存）。所有者に「編集者」権限をもらってください。';
+}
+ED.addEventListener('change',e=>{const t=e.target;if(t.classList.contains('ph-cat')){const p=S.cur.photos.find(x=>x.pid===t.dataset.pid);if(p){p.cat=t.value;change()}}});
+
+async function compress(file){
+  const url=URL.createObjectURL(file);
+  try{const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
+    const M=2400;let w=img.naturalWidth,h=img.naturalHeight;const s=Math.min(1,M/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+    const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.85));return blob||file}
+  catch(e){return file}finally{URL.revokeObjectURL(url)}
+}
+/* 写真のEXIFから撮影位置（GPS）を読む（JPEGのみ。縮小前の元ファイルから） */
+async function readGps(file){
+  try{const v=new DataView(await file.slice(0,262144).arrayBuffer());
+    if(v.byteLength<4||v.getUint16(0)!==0xFFD8)return null;
+    let off=2;
+    while(off+10<v.byteLength){const mk=v.getUint16(off);if((mk&0xFF00)!==0xFF00)return null;const len=v.getUint16(off+2);
+      if(mk===0xFFE1&&v.getUint32(off+4)===0x45786966)return parseGps(v,off+10);
+      if(mk===0xFFDA)return null;off+=2+len}
+  }catch(e){}return null}
+function parseGps(v,t){
+  const le=v.getUint16(t)===0x4949,u16=o=>v.getUint16(t+o,le),u32=o=>v.getUint32(t+o,le);
+  const ifd0=u32(4);const n=u16(ifd0);let g=0;
+  for(let i=0;i<n;i++){const e=ifd0+2+i*12;if(u16(e)===0x8825)g=u32(e+8)}
+  if(!g)return null;const gn=u16(g),tags={};
+  for(let i=0;i<gn;i++){const e=g+2+i*12,tag=u16(e),type=u16(e+2),cnt=u32(e+4);
+    if(type===2)tags[tag]=String.fromCharCode(v.getUint8(t+e+8));
+    else if(type===5){const p=u32(e+8),a=[];for(let k=0;k<cnt;k++){const den=u32(p+k*8+4);a.push(den?u32(p+k*8)/den:NaN)}tags[tag]=a}}
+  const dms=a=>a&&a.length>=3?a[0]+a[1]/60+a[2]/3600:NaN;
+  let lat=dms(tags[2]),lon=dms(tags[4]);
+  if(!isFinite(lat)||!isFinite(lon)||(lat===0&&lon===0))return null;
+  if(tags[1]==='S')lat=-lat;if(tags[3]==='W')lon=-lon;
+  return{lat:+lat.toFixed(6),lon:+lon.toFixed(6)}}
+let gpsHintShown=false;
+async function addPhotos(files){
+  if(S.readOnly||!files.length)return;const r=S.cur;toast(`${files.length}枚を処理中…`);
+  let withGps=0,firstNew=null;
+  for(const f of files){
+    const gps=await readGps(f);
+    const blob=await compress(f);const pid=uid();
+    try{await idb.put(pid,{buf:await blob.arrayBuffer(),type:'image/jpeg',rid:r.id})}catch(e){}
+    S.objUrls[pid]=URL.createObjectURL(blob);
+    const cat=r.photos.length===0?'外観':(r.photos[r.photos.length-1].cat||'外観');
+    const ph={pid,asset:null,cat,cap:'',at:f.lastModified||Date.now()};
+    if(gps){ph.lat=gps.lat;ph.lon=gps.lon;withGps++;if(!firstNew)firstNew=ph}
+    r.photos.push(ph);
+  }
+  let msg=`${files.length}枚を追加しました`;
+  if(firstNew&&!r.geo){setGeo(firstNew.lat,firstNew.lon,`写真 P-${pad(r.photos.indexOf(firstNew)+1)} の撮影位置`);msg+='。写真から位置を取得しました'}
+  else if(!withGps&&!r.geo&&!gpsHintShown){gpsHintShown=true;msg='この写真には位置情報がありません。下の「位置の取得について」をご覧ください'}
+  change();renderPhotos();toast(msg,withGps||r.geo?2600:5000);uploadPending();
+}
+function setGeo(lat,lon,src){S.cur.geo={lat,lon,src};renderGeo()}
+function renderGeo(){
+  const box=$('#geoBox');if(!box)return;const g=S.cur.geo;
+  if(g){box.innerHTML=`<span>位置（緯度・経度）</span>
+    <div class="geo-val"><b>${g.lat.toFixed(6)}, ${g.lon.toFixed(6)}</b><small>${esc(g.src||'')}</small></div>
+    <div class="geo-acts"><a class="btn" href="https://maps.gsi.go.jp/#18/${g.lat}/${g.lon}/" target="_blank" rel="noopener">地理院地図で見る</a>
+    <a class="btn" href="https://www.google.com/maps?q=${g.lat},${g.lon}" target="_blank" rel="noopener">Googleマップで見る</a>
+    <button class="btn ghost" type="button" data-act="geo-clear"${S.readOnly?' disabled':''}>位置を消す</button></div>
+    <p class="hint">住所の文字は地図で確認して「現所在地」に入力してください。</p>`}
+  else{box.innerHTML=`<span>位置（緯度・経度）</span>
+    <p class="hint geo-empty">位置情報付きの写真を追加すると、ここに自動で入ります。</p>
+    <input id="f-geo-manual" data-geo-manual placeholder="手入力：32.806120, 130.703210 の形で貼り付け" inputmode="decimal" autocomplete="off"${S.readOnly?' disabled':''}>`}
+}
+let uploading=false;
+async function uploadPending(){
+  if(uploading||!S.assets||!S.online)return;uploading=true;
+  try{const keys=await idb.keys();
+    for(const pid of keys){
+      const it=await idb.get(pid);if(!it)continue;
+      const rec=S.cur&&S.cur.id===it.rid?S.cur:(()=>{const x=allRecords().find(y=>y.id===it.rid);return x?normalize(x):null})();
+      const ph=rec&&rec.photos.find(p=>p.pid===pid);
+      if(!ph){if(S.loaded&&!rec&&S.db)await idb.del(pid);continue}
+      if(!mine(rec))continue;
+      if(ph.asset){await idb.del(pid);continue}
+      try{const res=await S.assets.upload(new Blob([it.buf],{type:'image/jpeg'}),{type:'image/jpeg'});
+        ph.asset=res.id;touch(rec);await idb.del(pid);
+        if(S.cur===rec)renderPhotos();
+      }catch(e){if(e&&e.code==='quota_or_state'){toast('写真の保存容量がいっぱいです');break}if(e&&(e.code==='rate_limited'||e.code==='store_unavailable'))break}
+    }
+  }catch(e){}finally{uploading=false}
+}
+setInterval(()=>{if(Object.keys(S.pending).length)flushAll();uploadPending()},30000);
+
+function viewPhoto(pid){const i=S.cur.photos.findIndex(p=>p.pid===pid);const p=S.cur.photos[i];if(!p)return;$('#viewerImg').src=photoSrc(p);$('#viewerCap').textContent=`P-${pad(i+1)}　${p.cat||''}　${p.cap||''}`;$('#viewer').showModal()}
+
+/* ===== confirm / delete ===== */
+let cfAction=null;
+function ask(title,text,okLabel,fn){$('#cfTitle').textContent=title;$('#cfText').textContent=text;$('#cfOk').textContent=okLabel;cfAction=fn;$('#dlgConfirm').showModal()}
+$('#cfOk').addEventListener('click',async()=>{$('#dlgConfirm').close();const f=cfAction;cfAction=null;f&&await f()});
+function confirmPhotoDelete(pid){if(S.readOnly)return;const i=S.cur.photos.findIndex(p=>p.pid===pid);
+  ask('写真を削除',`P-${pad(i+1)} を削除します。元に戻せません。`,'削除する',async()=>{const r=S.cur;const p=r.photos[i];r.photos.splice(i,1);change();renderPhotos();
+    try{await idb.del(pid)}catch(e){} if(p&&p.asset&&S.assets){try{await S.assets.delete(p.asset)}catch(e){}} toast('写真を削除しました')})}
+function confirmDelete(r){if(S.readOnly)return;
+  ask('調査票を削除',`「${r.name||'名称未入力'}」と写真${r.photos.length}枚を削除します。元に戻せません。`,'削除する',async()=>{
+    clearTimeout(timers[r.id]);delete S.pending[r.id];persistPending();S.records.delete(r.id);delete S.local[r.id];LS.set('local',S.local);
+    if(S.db&&r.by){try{await S.db.doc(recPath(r)).delete()}catch(e){toast('削除を送信できませんでした。電波のある所でもう一度お試しください');return}}
+    for(const p of r.photos){try{await idb.del(p.pid)}catch(e){} if(p.asset&&S.assets){try{await S.assets.delete(p.asset)}catch(e){}}}
+    S.cur=null;showList();toast('削除しました')})}
+
+/* ===== export ===== */
+document.addEventListener('click',e=>{const c=e.target.closest('[data-close]');if(c)c.closest('dialog').close()});
+$('#btnExport').addEventListener('click',()=>openExport(!!S.cur));
+function openExport(withOne){$('#expOne').hidden=!withOne;$('#expImport').hidden=!STANDALONE;
+  $('#expJsonNote').textContent=STANDALONE?'全項目＋写真。別のiPadへの移し替え・保管用':'全項目そのまま。写真は保存先IDのみ';$('#dlgExport').showModal()}
+/* バックアップ（JSON）の読み込み：同じ調査票は新しい方を残す。他のiPadの調査票は閲覧のみ */
+$('#impFile').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)importJSON(f)});
+async function importJSON(file){
+  let j;try{j=JSON.parse(await file.text())}catch(e){toast('読み込めないファイルです',4000);return}
+  const recs=Array.isArray(j&&j.records)?j.records:[];if(!recs.length){toast('調査票が入っていないファイルです',4000);return}
+  toast('読み込み中…');let n=0,skip=0,ph=0;
+  for(const x of recs){if(!x||!x.id)continue;
+    const cur=allRecords().find(y=>y.id===x.id);if(cur&&(cur.updatedAt||0)>=(x.updatedAt||0)){skip++;continue}
+    const r=normalize(x);if(!r.by&&j.device&&j.device!==S.uid)r.by=j.device;
+    for(const p of r.photos){const u=j.photos&&j.photos[p.pid];if(!u)continue;
+      try{const buf=await (await fetch(u)).arrayBuffer();await idb.put(p.pid,{buf,type:'image/jpeg',rid:r.id});delete S.objUrls[p.pid];ph++}catch(e){}}
+    S.local[r.id]=r;S.records.set(r.id,r);n++}
+  LS.set('local',S.local);renderList();
+  toast(`${n}件（写真${ph}枚）を読み込みました${skip?`。${skip}件は手元の方が新しいため変更なし`:''}`,5000)}
+$('#dlgExport').addEventListener('click',async e=>{const b=e.target.closest('[data-exp]');if(!b)return;$('#dlgExport').close();
+  if(b.dataset.exp==='import'){$('#impFile').click();return}
+  const recs=allRecords().map(normalize).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.createdAt-b.createdAt));
+  const stamp=today().replace(/-/g,'');
+  try{
+    if(b.dataset.exp==='csv')await save(`被災調査一覧_${stamp}.csv`,'﻿'+toCSV(recs));
+    else if(b.dataset.exp==='json'){const out={exportedAt:new Date().toISOString(),device:S.uid||null,records:recs};
+      if(STANDALONE){toast('写真を含めて書き出し中…');out.photos={};for(const r of recs)for(const p of r.photos)if(!p.asset){const u=await photoDataUrl(p);if(u)out.photos[p.pid]=u}}
+      await save(`被災調査バックアップ_${stamp}.json`,JSON.stringify(out))}
+    else if(b.dataset.exp==='report-one'){const r=S.cur;toast('報告書を作成中…');await save(`調査票_${(r.name||'名称未入力').replace(/[\\/:*?"<>|]/g,'_')}_${(r.date||'').replace(/-/g,'')}.html`,await buildReport([r]))}
+    else if(b.dataset.exp==='report-all'){if(!recs.length){toast('調査票がありません');return}toast('報告書を作成中…');await save(`被災調査票_全件_${stamp}.html`,await buildReport(recs))}
+  }catch(err){}
+});
+async function save(filename,data){
+  if(S.downloads){
+    try{await S.downloads.save({filename,data});toast('保存しました')}
+    catch(e){const c=e&&e.code;if(c==='declined')return;toast(c==='rate_limited'?'別の保存確認が開いています':'保存できませんでした（'+c+'）')}
+    return}
+  // 単独Web版：iPadの共有メニュー（ファイルに保存・AirDrop・メール）→ だめならダウンロード
+  const type=/\.csv$/.test(filename)?'text/csv':/\.json$/.test(filename)?'application/json':'text/html';
+  const file=new File([data],filename,{type:type+';charset=utf-8'});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}
+  catch(e){if(e&&e.name==='AbortError')return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=filename;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},5000);toast('保存しました（ダウンロード）')
+}
+const isLink=u=>/^https:\/\/[^\s"<>]+$/.test(u||'');
+/* Excel用：=HYPERLINK("URL","表示名")。リンク未登録なら名前だけ */
+const scanCell=s=>{const label=`${s.name}［${s.area}/${s.mode}${s.memo?'/'+s.memo:''}］`;
+  if(!isLink(s.link))return label.replace(/^[=+\-@]/,"'$&");
+  const q=x=>x.replace(/"/g,"'").slice(0,250);return `=HYPERLINK("${q(s.link)}","${q(label)}")`};
+const scanText=r=>[...r.scans.map(s=>`${s.name}［${s.area}/${s.mode}${s.memo?'/'+s.memo:''}］${s.link?' '+s.link:''}`),...(r.scanId?[r.scanId]:[])].join(' ｜ ');
+const joinSel=(arr,other)=>[...arr,...(other?[`その他（${other}）`]:[])].join('・');
+function groundText(r){return r.damage.ground||(r.groundItems.length?r.groundItems.join('・'):'')}
+function toCSV(recs){
+  const maxScan=Math.max(1,...recs.map(r=>r.scans.length));
+  const head=['整理番号','調査日','調査員','建築名称','現所在地','緯度','経度','建物種別','時代区分','指定の有無','現在用途','構造','屋根形状','屋根葺材','所有者氏名','所有者住所','所有者TEL','所有者Email/FAX',
+    ...DAMAGE.map(d=>d.l),...DAMAGE.map(d=>d.l+'_所見'),'その他','写真枚数',...Array.from({length:maxScan},(_,i)=>`3Dスキャン${i+1}`),'記録作業','状態','更新日時'];
+  const rows=recs.map(r=>[r.no,r.date,r.surveyor,r.name,r.address,r.geo?r.geo.lat:'',r.geo?r.geo.lon:'',r.btype,r.era,joinSel(r.designation,r.designationOther),joinSel(r.use,r.useOther),joinSel(r.structure,r.structureOther),joinSel(r.roofShape,r.roofShapeOther),joinSel(r.roofMat,r.roofMatOther),
+    r.owner.name,r.owner.address,r.owner.tel,r.owner.email,...DAMAGE.map(d=>d.k==='ground'?groundText(r):(r.damage[d.k]||'')),...DAMAGE.map(d=>r.damageNote[d.k]||''),r.notes,r.photos.length,...Array.from({length:maxScan},(_,i)=>r.scans[i]?scanCell(r.scans[i]):(i===0&&r.scanId?r.scanId:'')),r.tasks.join('・'),r.status==='done'?'完了':'入力中',new Date(r.updatedAt).toLocaleString('ja-JP')]);
+  return [head,...rows].map(row=>row.map(v=>{const s=String(v??'');return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(',')).join('\r\n');
+}
+async function photoDataUrl(p){
+  try{let blob;
+    if(p.asset){const res=await fetch('/_blob/'+p.asset);if(!res.ok)throw 0;blob=await res.blob()}
+    else{const it=await idb.get(p.pid);if(!it)return '';blob=new Blob([it.buf],{type:'image/jpeg'})}
+    return await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.onerror=()=>r('');fr.readAsDataURL(blob)})
+  }catch(e){return ''}
+}
+async function buildReport(recs){
+  const box=(opts,sel,other)=>opts.map(o=>sel.includes(o)?`<b>☑${esc(o)}</b>`:`☐${esc(o)}`).join(' ')+` その他：[ ${other?'<b>'+esc(other)+'</b>':'　　　　'} ]`;
+  const radio=(opts,v)=>opts.map(o=>o===v?`<b>●${esc(o)}</b>`:`○${esc(o)}`).join(' ');
+  let pages='';
+  for(const r of recs){
+    const dm=DAMAGE.map(d=>{let cell=radio(d.o,r.damage[d.k]||'');if(d.checks)cell+=' '+d.checks.map(o=>r.groundItems.includes(o)?`<b>☑${o}</b>`:`☐${o}`).join(' ');
+      const n=r.damageNote[d.k];return `<tr><th>${d.l}</th><td colspan="3">${cell}${n?`<div class="note">所見：${esc(n)}</div>`:''}</td></tr>`}).join('');
+    const desig=DESIGNATION.filter(x=>x!=='DOCOMOMO Japan');
+    let photos='';
+    for(let i=0;i<r.photos.length;i++){const p=r.photos[i];const src=await photoDataUrl(p);
+      photos+=`<figure>${src?`<img src="${src}">`:'<div class="nophoto">画像を取得できませんでした</div>'}<figcaption><b>P-${pad(i+1)}</b>　${esc(p.cat||'')}　${esc(p.cap||'')}</figcaption></figure>`}
+    pages+=`<section class="page"><table>
+      <tr><th>調査日</th><td>${esc(r.date)}</td><th>調査員</th><td>${esc(r.surveyor)}</td></tr>
+      <tr><th>建築名称</th><td colspan="3" class="big">${esc(r.name)}${r.no?`<span class="no">No.${esc(r.no)}</span>`:''}</td></tr>
+      <tr><th>現所在地</th><td colspan="3">${esc(r.address)}${r.geo?`<div class="note">緯度 ${r.geo.lat.toFixed(6)}　経度 ${r.geo.lon.toFixed(6)}（${esc(r.geo.src||'')}）</div>`:''}</td></tr>
+      <tr><th>建物種別</th><td>${esc(r.btype)}</td><th>時代区分</th><td>${esc(r.era)}</td></tr>
+      <tr><th>指定の有無</th><td colspan="3" class="opts">${desig.map(o=>r.designation.includes(o)?`<b>☑${o}</b>`:`☐${o}`).join(' ')} その他：[ ${r.designationOther?'<b>'+esc(r.designationOther)+'</b>':'　　　　'} ] ${r.designation.includes('DOCOMOMO Japan')?'<b>☑DOCOMOMO Japan</b>':'☐DOCOMOMO Japan'}</td></tr>
+      <tr><th>現在用途</th><td colspan="3" class="opts">${box(USES,r.use,r.useOther)}</td></tr>
+      <tr><th>構造</th><td colspan="3" class="opts">${box(STRUCTS,r.structure,r.structureOther)}</td></tr>
+      <tr><th>屋根形状</th><td colspan="3" class="opts">${box(ROOF_SHAPES,r.roofShape,r.roofShapeOther)}</td></tr>
+      <tr><th>屋根葺材</th><td colspan="3" class="opts">${box(ROOF_MATS,r.roofMat,r.roofMatOther)}</td></tr>
+      <tr><th colspan="4" class="band">所有者</th></tr>
+      <tr><th>氏名</th><td>${esc(r.owner.name)}</td><th>住所</th><td>${esc(r.owner.address)}</td></tr>
+      <tr><th>TEL</th><td>${esc(r.owner.tel)}</td><th>Email/FAX</th><td>${esc(r.owner.email)}</td></tr>
+      <tr><th colspan="4" class="band">被害の状況</th></tr>${dm}
+      <tr><th colspan="4" class="band">その他</th></tr>
+      <tr><td colspan="4" class="free">${esc(r.notes).replace(/\n/g,'<br>')}${r.tasks.length?`<div class="note">記録作業：${esc(r.tasks.join('・'))}</div>`:''}</td></tr>
+      ${r.scans.length||r.scanId?`<tr><th colspan="4" class="band">3Dスキャン（Polycam）</th></tr>
+      <tr class="sh"><th>キャプチャ名</th><th>範囲／モード</th><th>メモ</th><th>リンク</th></tr>
+      ${r.scans.map(s=>{const ok=isLink(s.link);return `<tr><td>${ok?`<a href="${esc(s.link)}">${esc(s.name)}</a>`:esc(s.name)}</td><td>${esc(s.area)}／${esc(s.mode)}</td><td>${esc(s.memo||'')}</td><td class="lk">${ok?`<a href="${esc(s.link)}">${esc(s.link)}</a>`:'未登録'}</td></tr>`}).join('')}
+      ${r.scanId?`<tr><td colspan="4" class="note">以前のメモ：${esc(r.scanId)}</td></tr>`:''}`:''}
+      <tr><th colspan="4" class="band">写真</th></tr>
+      <tr><td colspan="4">${r.photos.length?`${r.photos.length}枚（次ページ以降）`:'なし'}</td></tr>
+    </table></section>
+    ${r.photos.length?`<section class="page photos"><h2>${esc(r.name)}　写真</h2><div class="pg">${photos}</div></section>`:''}`;
+  }
+  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>被災調査票</title><style>
+  @page{size:A4;margin:12mm}body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;color:#000;margin:0;font-size:10.5pt}
+  .page{page-break-after:always;max-width:186mm;margin:0 auto 10mm}.page:last-child{page-break-after:auto}
+  table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border:1px solid #000;padding:5px 7px;vertical-align:middle;line-height:1.6}
+  th{width:22%;font-weight:700;text-align:center;background:#fff}td{word-break:break-all}.band{text-align:center;width:auto}
+  .opts{font-size:9.5pt}.opts b,td b{font-weight:700}.big{font-size:12.5pt;font-weight:700}.no{float:right;font-size:9pt;font-weight:400}
+  .note{font-size:9pt;color:#333;margin-top:2px}
+  a{color:#1a4fa0;text-decoration:underline}.lk{font-size:8.5pt;word-break:break-all}
+  tr.sh th{width:auto;font-size:9pt;background:#f2f2f2}.free{min-height:18mm;height:18mm;vertical-align:top}
+  h2{font-size:12pt;margin:0 0 4mm}.pg{display:grid;grid-template-columns:1fr 1fr;gap:5mm}
+  figure{margin:0;break-inside:avoid}figure img{width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid #000;display:block}
+  figcaption{font-size:9pt;margin-top:2px}.nophoto{aspect-ratio:4/3;border:1px dashed #999;display:grid;place-items:center;color:#777;font-size:9pt}
+  </style></head><body>${pages}</body></html>`;
+}
+
+boot();
+</script>
+
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body></html>
